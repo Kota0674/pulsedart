@@ -1,0 +1,27 @@
+# --- never publish: stock firmware, device data, keys (see docs/publishing.md) ---
+dump/
+dump2/
+*.bin
+fw/keys/
+*.pem
+fw/mouse/src/pmw3389_srom.h
+fw/mouse/src/led_tables.h
+re/led_tables.h
+re/tools/out/
+re/tools/**/*.lst
+re/tools/**/*.txt
+pi_wiring.png
+pi_wiring_both.png
+
+# --- personal / local ---
+fw/mouse/local.conf
+pi/logs/
+
+# --- build output ---
+fw/*/build*/
+build/
+__pycache__/
+*.pyc
+
+# --- local only (third-party photos, notes) ---
+local/
