@@ -1,0 +1,35 @@
+menu "Pulsedart"
+
+config PULSEDART_STOCK_USB_ID
+	bool "Present the stock USB identity (0951:16E2, HyperX Pulsefire Dart)"
+	default y
+	help
+	  Needed for HyperX NGENUITY to find the mouse. If disabled, the VID/PID below
+	  and the name "Pulsedart mouse" are used.
+
+config PULSEDART_USB_VID
+	hex "USB vendor ID"
+	default 0x2fe3
+	help
+	  0x2fe3 is the Zephyr project test VID. Fine for a personal device; change
+	  it if you own a VID.
+
+config PULSEDART_USB_PID
+	hex "USB product ID"
+	default 0x0100
+
+config PULSEDART_DFU_PID
+	hex "USB product ID in DFU mode"
+	default 0x0101
+
+config PULSEDART_ESB_RECORD
+	string "Default dongle pairing record (8 hex bytes)"
+	default ""
+	help
+	  Pairing record used when the mouse has not paired itself yet, in the stock
+	  format "ch 02 a0 a1 a2 a3 01 ff". Takes precedence over the stock record at
+	  0xEF000. Empty = use the stock record.
+
+endmenu
+
+source "Kconfig.zephyr"
