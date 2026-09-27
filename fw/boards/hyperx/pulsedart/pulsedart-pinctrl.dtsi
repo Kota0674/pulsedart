@@ -1,0 +1,63 @@
+&pinctrl {
+	spi0_default: spi0_default {
+		group1 {
+			psels = <NRF_PSEL(SPIM_SCK, 0, 22)>,
+				<NRF_PSEL(SPIM_MOSI, 0, 17)>,
+				<NRF_PSEL(SPIM_MISO, 0, 20)>;
+		};
+	};
+	spi0_sleep: spi0_sleep {
+		group1 {
+			psels = <NRF_PSEL(SPIM_SCK, 0, 22)>,
+				<NRF_PSEL(SPIM_MOSI, 0, 17)>,
+				<NRF_PSEL(SPIM_MISO, 0, 20)>;
+			low-power-enable;
+		};
+	};
+
+	/* Stock PWM pin table @0x646c4: PWM0 = P0.12 P0.11 P1.09 P0.08, PWM1 = P0.04 P0.06 */
+	pwm0_default: pwm0_default {
+		group1 {
+			psels = <NRF_PSEL(PWM_OUT0, 0, 12)>,
+				<NRF_PSEL(PWM_OUT1, 0, 11)>,
+				<NRF_PSEL(PWM_OUT2, 1, 9)>,
+				<NRF_PSEL(PWM_OUT3, 0, 8)>;
+		};
+	};
+	pwm0_sleep: pwm0_sleep {
+		group1 {
+			psels = <NRF_PSEL(PWM_OUT0, 0, 12)>,
+				<NRF_PSEL(PWM_OUT1, 0, 11)>,
+				<NRF_PSEL(PWM_OUT2, 1, 9)>,
+				<NRF_PSEL(PWM_OUT3, 0, 8)>;
+			low-power-enable;
+		};
+	};
+	pwm1_default: pwm1_default {
+		group1 {
+			psels = <NRF_PSEL(PWM_OUT0, 0, 4)>,
+				<NRF_PSEL(PWM_OUT1, 0, 6)>;
+		};
+	};
+	pwm1_sleep: pwm1_sleep {
+		group1 {
+			psels = <NRF_PSEL(PWM_OUT0, 0, 4)>,
+				<NRF_PSEL(PWM_OUT1, 0, 6)>;
+			low-power-enable;
+		};
+	};
+
+	i2c1_default: i2c1_default {
+		group1 {
+			psels = <NRF_PSEL(TWIM_SCL, 0, 0)>,
+				<NRF_PSEL(TWIM_SDA, 0, 1)>;
+		};
+	};
+	i2c1_sleep: i2c1_sleep {
+		group1 {
+			psels = <NRF_PSEL(TWIM_SCL, 0, 0)>,
+				<NRF_PSEL(TWIM_SDA, 0, 1)>;
+			low-power-enable;
+		};
+	};
+};

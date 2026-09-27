@@ -1,0 +1,6 @@
+board:
+  name: pulsedart
+  full_name: HyperX Pulsefire Dart (nRF52840)
+  vendor: hyperx
+  socs:
+    - name: nrf52840

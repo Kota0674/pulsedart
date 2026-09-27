@@ -1,0 +1,202 @@
+/dts-v1/;
+#include <nordic/nrf52840_qiaa.dtsi>
+#include "pulsedart-pinctrl.dtsi"
+#include <zephyr/dt-bindings/pwm/pwm.h>
+#include <zephyr/dt-bindings/regulator/nrf5x.h>
+
+/* Pin map: see PINMAP.md (derived from stock firmware + live register reads). */
+
+/ {
+	model = "HyperX Pulsefire Dart";
+	compatible = "hyperx,pulsedart";
+
+	chosen {
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+		zephyr,code-partition = &slot0_partition;
+	};
+
+	buttons {
+		compatible = "gpio-keys";
+		btn_left: btn_left {
+			gpios = <&gpio1 15 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Left";
+		};
+		btn_right: btn_right {
+			gpios = <&gpio1 13 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Right";
+		};
+		btn_middle: btn_middle {
+			gpios = <&gpio1 10 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Middle";
+		};
+		btn_dpi: btn_dpi {
+			gpios = <&gpio1 0 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "DPI";
+		};
+		btn_fwd: btn_fwd {
+			gpios = <&gpio1 4 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Forward (button 5)";
+		};
+		btn_back: btn_back {
+			gpios = <&gpio1 2 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Back (button 4)";
+		};
+	};
+
+	/* Same pins driven by PWM (used by the main firmware) */
+	pwmleds {
+		compatible = "pwm-leds";
+		pwm_led0_r: pwm_led0_r { pwms = <&pwm0 3 PWM_USEC(320) PWM_POLARITY_NORMAL>; };
+		pwm_led0_g: pwm_led0_g { pwms = <&pwm1 0 PWM_USEC(320) PWM_POLARITY_NORMAL>; };
+		pwm_led0_b: pwm_led0_b { pwms = <&pwm1 1 PWM_USEC(320) PWM_POLARITY_NORMAL>; };
+		pwm_led1_r: pwm_led1_r { pwms = <&pwm0 0 PWM_USEC(320) PWM_POLARITY_NORMAL>; };
+		pwm_led1_g: pwm_led1_g { pwms = <&pwm0 1 PWM_USEC(320) PWM_POLARITY_NORMAL>; };
+		pwm_led1_b: pwm_led1_b { pwms = <&pwm0 2 PWM_USEC(320) PWM_POLARITY_NORMAL>; };
+	};
+
+	/* Plain GPIO view of the same LED pins (bring-up app only) */
+	leds {
+		compatible = "gpio-leds";
+		led0_r: led0_r { gpios = <&gpio0 8 GPIO_ACTIVE_HIGH>; };
+		led0_g: led0_g { gpios = <&gpio0 4 GPIO_ACTIVE_HIGH>; };
+		led0_b: led0_b { gpios = <&gpio0 6 GPIO_ACTIVE_HIGH>; };
+		led1_r: led1_r { gpios = <&gpio0 12 GPIO_ACTIVE_HIGH>; };
+		led1_g: led1_g { gpios = <&gpio0 11 GPIO_ACTIVE_HIGH>; };
+		led1_b: led1_b { gpios = <&gpio1 9 GPIO_ACTIVE_HIGH>; };
+		/* Supply enable for the LEDs (hypothesis from power.md) */
+		led_pwr: led_pwr { gpios = <&gpio0 24 GPIO_ACTIVE_HIGH>; };
+	};
+
+	/* Board signals used directly by the firmware (roles: PINMAP.md, re/power.md) */
+	zephyr,user {
+		sensor-ncs-gpios = <&gpio0 13 GPIO_ACTIVE_LOW>;
+		sensor-pwr-gpios = <&gpio1 7 GPIO_ACTIVE_HIGH>;	/* stock: set high once, never low */
+		sensor-motion-gpios = <&gpio0 15 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+		wheel-a-gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
+		wheel-b-gpios = <&gpio0 29 GPIO_ACTIVE_HIGH>;
+		chg-pgood-gpios = <&gpio1 11 GPIO_ACTIVE_LOW>;	/* external power present */
+		chg-stat-gpios = <&gpio1 6 GPIO_ACTIVE_LOW>;	/* charging */
+		qi-present-gpios = <&gpio0 14 GPIO_ACTIVE_HIGH>;
+		qi-disable-gpios = <&gpio0 10 GPIO_ACTIVE_HIGH>;	/* stock: 1 while on cable */
+		led-enable-gpios = <&gpio0 24 GPIO_ACTIVE_HIGH>;
+	};
+
+	aliases {
+		led0 = &led0_g;
+		sw0 = &btn_left;
+	};
+};
+
+/* DC/DC for REG1, as stock (DCDCEN=1, so the inductor is fitted). REG0 output (2.1 V)
+ * comes from UICR REGOUT0, already programmed, and is not touched. */
+&reg1 {
+	regulator-initial-mode = <NRF5X_REG_MODE_DCDC>;
+};
+
+&gpiote { status = "okay"; };
+&gpio0 { status = "okay"; };
+&gpio1 { status = "okay"; };
+
+/*
+ * PMW3389 on SPI0 (legacy SPI in stock fw; SPIM0 uses the same pins/instance).
+ * NCS (P0.13) is driven by the sensor driver itself: the PMW3389 needs
+ * specific delays around NCS that a generic cs-gpios cannot express.
+ */
+&spi0 {
+	compatible = "nordic,nrf-spim";
+	status = "okay";
+	pinctrl-0 = <&spi0_default>;
+	pinctrl-1 = <&spi0_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+/* RGB LEDs, same PWM instances/channels as stock (period 320 us = 3.125 kHz) */
+&pwm0 {
+	status = "okay";
+	pinctrl-0 = <&pwm0_default>;
+	pinctrl-1 = <&pwm0_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+&pwm1 {
+	status = "okay";
+	pinctrl-0 = <&pwm1_default>;
+	pinctrl-1 = <&pwm1_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+zephyr_udc0: &usbd {
+	status = "okay";
+	/* Same four HID interfaces as the stock firmware (re/vendor_protocol.md 10.2) */
+	hid_mouse: hid_mouse {
+		compatible = "zephyr,hid-device";
+		label = "mouse";
+		protocol-code = "mouse";
+		in-polling-period-us = <1000>;
+		in-report-size = <64>;
+	};
+	hid_vendor: hid_vendor {
+		compatible = "zephyr,hid-device";
+		label = "vendor";
+		protocol-code = "none";
+		in-polling-period-us = <1000>;
+		in-report-size = <64>;
+		out-polling-period-us = <1000>;
+		out-report-size = <64>;
+	};
+	hid_kbd: hid_kbd {
+		compatible = "zephyr,hid-device";
+		label = "keyboard";
+		protocol-code = "none";
+		in-polling-period-us = <1000>;
+		in-report-size = <64>;
+	};
+	hid_consumer: hid_consumer {
+		compatible = "zephyr,hid-device";
+		label = "consumer";
+		protocol-code = "none";
+		in-polling-period-us = <1000>;
+		in-report-size = <64>;
+	};
+};
+
+/* Settings EEPROM @0x50, bq27421 fuel gauge @0x55 */
+&i2c1 {
+	compatible = "nordic,nrf-twim";
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c1_default>;
+	pinctrl-1 = <&i2c1_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+&flash0 {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		/* Stock boot stub + boot header + USB HID bootloader: never touched */
+		stock_boot_partition: partition@0 {
+			label = "stock-boot";
+			reg = <0x00000000 0x00050000>;
+			read-only;
+		};
+		/* Stub jumps here when header @0x27010 says "jump" (it does) */
+		slot0_partition: partition@50000 {
+			label = "image-0";
+			reg = <0x00050000 0x0009d000>;
+		};
+		/* 0xEE000/0xEF000 hold stock data (pairing record): keep */
+		stock_data_partition: partition@ee000 {
+			label = "stock-data";
+			reg = <0x000ee000 0x00002000>;
+			read-only;
+		};
+		storage_partition: partition@f0000 {
+			label = "storage";
+			reg = <0x000f0000 0x00008000>;
+		};
+	};
+};

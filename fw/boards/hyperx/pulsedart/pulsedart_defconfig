@@ -1,0 +1,20 @@
+# No 32 kHz crystal: XL1/XL2 (P0.00/P0.01) are used as I2C
+CONFIG_CLOCK_CONTROL_NRF_K32SRC_RC=y
+
+# NFC pins (P0.09/P0.10) and the reset pin (P0.18) are already configured in the
+# stock UICR (NFCPINS=GPIO, PSELRESET=P0.18). We deliberately do not ask Zephyr to
+# program the UICR, so our image never touches it.
+
+CONFIG_GPIO=y
+CONFIG_ARM_MPU=y
+CONFIG_HW_STACK_PROTECTION=y
+
+# Logs over SWD (no UART wired)
+CONFIG_CONSOLE=y
+CONFIG_USE_SEGGER_RTT=y
+CONFIG_RTT_CONSOLE=y
+CONFIG_UART_CONSOLE=n
+CONFIG_SERIAL=n
+
+# Our image lives at 0x50000 behind the stock boot stub (see PINMAP.md)
+CONFIG_USE_DT_CODE_PARTITION=y
