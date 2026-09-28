@@ -84,6 +84,24 @@ Conclusions:
 | Recovery: L+R+Back held at power-up, then blue LEDs, `Pulsedart recovery` on USB after 4 s, image written to slot 1, installed, clean reboot | OK |
 | Debug build: log on the USB COM port (`/dev/ttyACM0`) | OK |
 
+## Report rate per link (2026-09-28, Windows 11, fw 0.4.1)
+
+`tools/rawinterval.ps1` records the arrival time of every Raw Input report per device while the
+mouse is moved in circles for 25 s. Its window has to stay in front: Windows 11 24H2 and later
+throttle raw input of background windows to about 125 Hz (my first run showed 8 ms on every
+link because of that).
+
+| Link | Reports/s | Median gap | Gaps > 2 ms, median |
+|---|---|---|---|
+| USB cable | 743 | 1.00 ms | 7.1 ms (7 %, pauses in the motion) |
+| Bluetooth LE (Windows host) | 365 | 0.58 ms | 6.1 ms (27 %): reports come in bursts, one burst per 7.5 ms connection interval |
+| Stock dongle (HP, 03F0:068E) | 125 | 7.99 ms | 7.99 ms (97 %) |
+
+The mouse sends ESB reports at the same 1 ms rate as USB (same divider, no limit in
+`esb_link.c`), so the 125 Hz through the dongle comes from the dongle, most likely its SONiX
+USB side (bInterval or its forwarding loop). Not investigated yet; whether the stock firmware
+gets more through the same dongle is also untested.
+
 ## Not verified yet
 
 - Low-battery indication at a really low battery. (Qi charging verified 2026-09-28: Qi detected,

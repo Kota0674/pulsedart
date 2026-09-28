@@ -35,6 +35,18 @@ What works:
 - Optional **MCUboot** variant: signed firmware updates over the USB cable (no more opening
   the mouse), plus a recovery mode (hold Left + Right + Back while switching on).
 
+How often motion reaches the PC, measured on Windows 11 with
+[tools/rawinterval.ps1](tools/rawinterval.ps1) while moving the mouse in circles:
+
+| Link | Update interval | Notes |
+|---|---|---|
+| USB cable | **1 ms** (1000 Hz) | median gap 1.00 ms |
+| Bluetooth LE | **~7.5 ms** | the BLE connection interval; each interval carries a few reports |
+| Stock dongle (2.4 GHz) | **8 ms** (125 Hz) | the firmware sends every 1 ms, but reports arrive at 125 Hz through my (HP) dongle; the limit seems to be on the dongle's USB side, not investigated yet |
+
+Waking up from sleep takes 2-7 ms until the first packet reaches the dongle. These numbers
+are the report rate, not a full click-to-screen latency measurement.
+
 > **Status:** personal project, running daily on my own mouse (mostly over Bluetooth). Tested
 > on hardware, see [docs/testing.md](docs/testing.md). Not affiliated with HyperX, HP or
 > Kingston. You need an SWD programmer and must open the mouse. You can brick nothing
