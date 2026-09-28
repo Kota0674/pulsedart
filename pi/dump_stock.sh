@@ -27,7 +27,7 @@ done
 echo "flash, UICR and FICR read twice and identical"
 
 # the EEPROM read halts the CPU, reads 64 KB in 16 KB chunks and resets the mouse after
-openocd -f pulsedart_nolvl.cfg -f eeprom.tcl | grep -q "EEPROM READ OK" || { echo "EEPROM read failed"; exit 1; }
+openocd -f pulsedart_nolvl.cfg -f eeprom.tcl | grep "EEPROM READ OK" >/dev/null || { echo "EEPROM read failed"; exit 1; }
 cat dump/eeprom_0000.bin dump/eeprom_4000.bin dump/eeprom_8000.bin dump/eeprom_c000.bin > dump/eeprom.bin
 rm dump/eeprom_0000.bin dump/eeprom_4000.bin dump/eeprom_8000.bin dump/eeprom_c000.bin
 

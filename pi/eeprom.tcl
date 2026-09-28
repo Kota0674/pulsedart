@@ -14,8 +14,17 @@ set TOTAL  0x10000
 proc tw {off val} { global TWI; mww [expr {$TWI + $off}] $val }
 proc tr {off}     { global TWI; return [lindex [read_memory [expr {$TWI + $off}] 32 1] 0] }
 
-tw 0x500 0                ;# ENABLE off (stock uses legacy TWI = 5)
-tw 0x500 6                ;# ENABLE = TWIM (EasyDMA), same PSEL SCL P0.00 / SDA P0.01
+# Stock uses legacy TWI; our firmware uses TWIM (for the gauge at 0x55 too). The halt can
+# freeze a TWIM transfer mid-way (its ISR never sends STOP), so stop it and power-cycle
+# the peripheral before use.
+tw 0x014 1                ;# TASKS_STOP
+sleep 5
+tw 0x500 0
+tw 0xffc 0                ;# peripheral POWER off/on: full reset of TWI1
+tw 0xffc 1
+tw 0x508 0                ;# PSEL.SCL P0.00
+tw 0x50c 1                ;# PSEL.SDA P0.01
+tw 0x500 6                ;# ENABLE = TWIM (EasyDMA)
 tw 0x524 0x01980000       ;# 100 kHz, conservative
 tw 0x588 0x50             ;# EEPROM 7-bit address
 tw 0x200 0x1080           ;# SHORTS: LASTTX_STARTRX | LASTRX_STOP
