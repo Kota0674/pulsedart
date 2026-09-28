@@ -1,0 +1,6 @@
+# Built into the MCUboot image only (passed as mcuboot_EXTRA_ZEPHYR_MODULES by build-mcuboot.ps1)
+if(CONFIG_MCUBOOT_ACTION_HOOKS)
+  zephyr_library()
+  zephyr_library_sources(hooks.c)
+  zephyr_library_include_directories(${ZEPHYR_MCUBOOT_MODULE_DIR}/boot/bootutil/include)
+endif()
