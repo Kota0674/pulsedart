@@ -71,17 +71,21 @@ original dongle needs nothing: the firmware uses the stock pairing record.
 | Radio | Nordic **nRF52810 QCAAD0** (ESB PRX), 3.3 V, APPROTECT open |
 | USB | SONiX **SN32F264** (Cortex-M0), talks to the nRF over SPI (not dumped) |
 
-Programming the dongle is not needed for this firmware. The dongle PCB has labelled round pads
-next to the chip antenna: **SWDIO**, **SWCLK**, **V33**, **GND**, **URX / UTX** (the nRF ↔ SONiX link)
-and **TP1 / TP2**. Photos: FCC filings [JIC-MCWA1](https://fccid.io/JIC-MCWA1) (Kingston) and
-[B94-MCWA1](https://fccid.io/B94-MCWA1) (the same adapter under HP; the HP-era dongle reports USB
-VID 03F0). For reading it (`pi/dongle_ok.cfg`, left header row in the diagram above):
-- SWCLK pad: GPIO27 (pin 13) through 1 kΩ (this pad reads 0 V at rest: internal pull-down).
-- SWDIO pad: GPIO17 (pin 11) through 1 kΩ. OpenOCD drives it open-drain.
-- V33: Pi pin 1 (3.3 V), and GND on pin 9. Unlike the mouse, the dongle is powered from the Pi
-  while it is out of the USB port.
+Programming the dongle is not needed for this firmware. On my dongle (HP revision, USB VID
+03F0) the round pads on the back are only labelled **TP1 / TP2 / TP3**, **V33**, **GND** and
+**URX / UTX**; SWD is on two of the test points:
 
-During the first session the pads were found by trying combinations. The names used in the old
-config comments (TP1/TP2/TP3) were the author's working labels, not the silkscreen. Trust the
-silkscreen SWDIO/SWCLK and verify with `pi/dongle_guard.tcl`, which refuses to run if it finds
-the 2.1 V mouse on the wires instead.
+![Dongle pads](img/dongle_pads.jpg)
+
+For reading it (`pi/dongle_ok.cfg`, left header row in the diagram above):
+- **TP1 = SWCLK:** GPIO27 (pin 13) through 1 kΩ.
+- **TP3 = SWDIO:** GPIO17 (pin 11) through 1 kΩ. OpenOCD drives it open-drain.
+- **V33:** Pi pin 1 (3.3 V), **GND** on pin 9. Unlike the mouse, the dongle is powered from the
+  Pi, so take it out of the USB port first.
+- TP2 is not SWD. I had it on GPIO22 while probing; it is not used.
+- URX/UTX (the UART between the nRF and the SONiX) are not needed.
+
+I soldered all three TPs and tried every CLK/DIO combination; only CLK on TP1 with DIO on TP3
+answered (DPIDR 0x2ba01477). `pi/dongle_guard.tcl` refuses to run if it finds
+the 2.1 V mouse on the wires instead. Other revisions may differ; FCC photos:
+[JIC-MCWA1](https://fccid.io/JIC-MCWA1) (Kingston) and [B94-MCWA1](https://fccid.io/B94-MCWA1) (HP).
