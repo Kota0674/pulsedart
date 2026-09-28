@@ -65,6 +65,17 @@ With the MCUboot variant you flash once over SWD (`fw\build-mcuboot.ps1`,
 `pi/flash_mcuboot.sh`) and update over USB afterwards (`pi/dfu_update.sh`). Generate your own
 signing key first, see [docs/flashing.md](docs/flashing.md#mcuboot-variant-firmware-updates-over-usb-in-use-since-2026-09-28).
 
+## Disclaimer
+
+This is an unofficial hobby project. It is not affiliated with, endorsed or supported by
+HyperX, HP, Kingston or PixArt.
+
+Opening the mouse, soldering to it and replacing its firmware voids your warranty and can
+damage the mouse, its battery or the computer it is connected to. Everything here is provided
+as is, without any warranty. You do all of this **at your own risk**; the author takes no
+responsibility for any damage, data loss or other consequences. Keep a full dump of your stock
+firmware before you flash anything.
+
 ## License
 
 [MIT](LICENSE) for our own code and documentation. This does not cover:
