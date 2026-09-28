@@ -1,0 +1,48 @@
+/* MCUboot variant: replaces the stock-boot flash layout of the board */
+/delete-node/ &stock_boot_partition;
+/delete-node/ &slot0_partition;
+/delete-node/ &stock_data_partition;
+/delete-node/ &storage_partition;
+
+&flash0 {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		/*
+		 * MCUboot replaces the stock boot stub and HyperX USB bootloader
+		 * (0x0-0x50000); both are kept in dump/flash.bin for a full restore over SWD.
+		 */
+		/* 64 KB: MCUboot with the USB DFU recovery stack (about 54 KB) */
+		boot_partition: partition@0 {
+			label = "mcuboot";
+			reg = <0x00000000 0x00010000>;
+		};
+		slot0_partition: partition@10000 {
+			label = "image-0";
+			reg = <0x00010000 0x0006e000>;
+		};
+		slot1_partition: partition@7e000 {
+			label = "image-1";
+			reg = <0x0007e000 0x0006e000>;
+		};
+		/* 0xEE000/0xEF000 hold stock data (pairing record): keep */
+		stock_data_partition: partition@ee000 {
+			label = "stock-data";
+			reg = <0x000ee000 0x00002000>;
+			read-only;
+		};
+		storage_partition: partition@f0000 {
+			label = "storage";
+			reg = <0x000f0000 0x00008000>;
+		};
+	};
+};
+
+/* MCUboot's USB DFU detect pin: Back; fw/mcuboot_hooks requires the full L+R+Back combo */
+/ {
+	aliases {
+		mcuboot-button0 = &btn_back;
+	};
+};
