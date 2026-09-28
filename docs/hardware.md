@@ -52,7 +52,8 @@ Pi pin 20 (GND) ---------------- mouse GND
     PCB antenna. They take the programmer wires.
   - **VDD1**, left of U1, is the 2.1 V MCU supply. It is only for measuring; connect nothing.
   - **TP1 "RX"** and **TP4 "TX"** are the UART (not needed; the stock firmware does not use it).
-  - GND: any ground point, e.g. the battery negative (BAT−) or a connector shield.
+  - **GND:** the **GND2** pad at the bottom left of the board (that is where I soldered it);
+    any other ground works too, e.g. BAT−.
 
 ![Mouse main board](img/mouse_board.jpg)
 
