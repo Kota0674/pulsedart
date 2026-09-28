@@ -2,7 +2,26 @@
 
 A replacement firmware for the **HyperX Pulsefire Dart** wireless mouse (nRF52840 + PixArt
 PMW3389), written from scratch on Zephyr / nRF Connect SDK. It keeps what the stock firmware
-offers and adds Bluetooth LE:
+offers and adds Bluetooth LE.
+
+<table>
+<tr>
+<td><img src="docs/img/mouse_board.jpg" alt="Main board of my Dart" width="400"></td>
+<td><img src="docs/img/mouse_swd_pads.jpg" alt="SWD pads next to the nRF52840" width="400"></td>
+</tr>
+<tr>
+<td>My Dart opened up. The SWD pads are next to the nRF52840 (U1), ground on GND2.</td>
+<td>Close-up of the pads. The TX pad came off while I was soldering; it is not needed.</td>
+</tr>
+</table>
+
+Why: I rarely play games and wanted to use this mouse over Bluetooth, without the dongle.
+The Dart already has an nRF52840 inside, which does Bluetooth fine; the stock firmware just
+never used it. So I dumped the stock firmware over SWD with a Raspberry Pi, worked out how
+everything is wired and talks to the dongle and NGENUITY, and wrote my own firmware that does
+everything the stock one does, plus BLE.
+
+What works:
 
 - **USB** wired mouse with the stock USB identity (0951:16E2, 4 HID interfaces).
 - **2.4 GHz with the stock HyperX dongle** (Nordic ESB). The protocol was reverse engineered;
@@ -21,6 +40,12 @@ offers and adds Bluetooth LE:
 > Kingston. You need an SWD programmer and must open the mouse. You can brick nothing
 > permanently as long as you keep your own full flash dump (the flash is not
 > read-protected), but you do this **at your own risk**.
+
+<img src="docs/img/dongle_pads.jpg" alt="Dongle pads" width="500">
+
+The back of the stock dongle with its SWD pads (only needed if you want to look inside it).
+How I wired the Raspberry Pi as the programmer: [header diagram](docs/img/pi_header_wiring.png),
+details in [docs/hardware.md](docs/hardware.md).
 
 ## Documentation
 
