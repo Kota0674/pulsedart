@@ -53,8 +53,14 @@ Pi pin 20 (GND) ---------------- mouse GND
   - **VDD1**, left of U1, is the 2.1 V MCU supply. It is only for measuring; connect nothing.
   - **TP1 "RX"** and **TP4 "TX"** are the UART (not needed; the stock firmware does not use it).
   - GND: any ground point, e.g. the battery negative (BAT−) or a connector shield.
-  - Board photos: the public FCC filing of the mouse, [FCC ID JIC-MC006B](https://fccid.io/JIC-MC006B)
-    (internal photos exhibit). A photo of our own with the pads marked is still to be added (TODO).
+
+![Mouse main board](img/mouse_board.jpg)
+
+![SWD pads next to U1](img/mouse_swd_pads.jpg)
+
+The pads are tiny and close to U1; use thin wire and a fine tip. On my board the TP4 (TX) pad
+came off while I was soldering there, which does not matter because the UART is not used.
+More board photos: the FCC filing, [FCC ID JIC-MC006B](https://fccid.io/JIC-MC006B).
 
 Check the wiring read-only first: `pi/step1.sh` reads the IDCODE and FICR and checks APPROTECT
 without writing anything.
