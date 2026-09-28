@@ -66,6 +66,8 @@ int power_init(void);
 void power_update(void);	/* call ~every 5 s */
 const struct power_status *power_get(void);
 int power_gauge_read16(uint8_t reg, uint16_t *val);
+int power_gauge_control(uint16_t sub, uint16_t *val);
+uint8_t power_gauge_status(void);	/* stock misc[8]: 0 OK, 1 missing, 2 programmed */
 
 /* ---- persistent settings ---- */
 struct pd_settings {

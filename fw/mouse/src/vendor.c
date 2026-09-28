@@ -43,8 +43,8 @@ static int cmd_d0(uint8_t *r)
 		scfg.cfg[CFG_POLL_IDX] = r[4];
 		return OK;
 	case 0x01:
-		if (r[2] >= 1) {
-			return ERR(2);	/* sub 1 (gauge Control sub-command) not implemented */
+		if (r[2] >= 2) {
+			return ERR(2);
 		}
 		if (r[3] >= 2) {
 			return ERR(3);
@@ -556,18 +556,23 @@ static int cmd_51(uint8_t *r)
 		r[3] = 3;
 		memcpy(&r[4], &scfg.misc[0], 3);
 		memcpy(&r[7], &scfg.misc[MISC_MV], 2);
+		scfg.misc[MISC_GAUGE_STATUS] = power_gauge_status();
 		r[9] = scfg.misc[MISC_GAUGE_STATUS];
 		r[10] = 0x40;	/* gauge wait counter: stock value after init */
 		r[11] = r[12] = r[13] = 0;
 		return OK;
 	}
 	if (r[1] == 0x01) {
-		if (r[2] >= 1) {
-			return ERR(2);	/* sub 1 (gauge Control sub-command) not implemented */
+		if (r[2] >= 2) {
+			return ERR(2);
 		}
 		uint16_t v = 0;
 
-		power_gauge_read16(r[2] == 0 ? r[4] : 0x00, &v);	/* sub 1 (Control) not supported */
+		if (r[2] == 0) {
+			power_gauge_read16(r[4], &v);
+		} else {
+			power_gauge_control(r[4], &v);	/* stock: 8-bit sub-command */
+		}
 		r[3] = 0;
 		r[5] = v;
 		r[6] = v >> 8;
