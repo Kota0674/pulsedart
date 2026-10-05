@@ -3,6 +3,19 @@
 Dates are when the work was done. Only `v0.4.1` is tagged; the older entries describe how the
 project got there.
 
+## Unreleased
+
+- **Releases without a compiler:** `fw\build-release.ps1` builds both variants with marker
+  bytes instead of the sensor SROM and the LED tables, and `tools/make_firmware.py` puts that
+  data in from your own dump. For MCUboot it also creates your signing key, puts the public key
+  into the bootloader and signs the image. The result is byte-identical to a normal build
+  except for the build time.
+- The stock-derived data moved from two headers into `fw/mouse/src/stock_blobs.c`
+  (`tools/extract_blobs.py` writes it), so that each array is one block in the image.
+- README: Raspberry Pi wiring on the front page; settings and dongle pairing carry over.
+- `pi/gauge_read.tcl`: reads the fuel gauge over SWD (standard commands only).
+- A second Dart flashed: stock 1.1.0.8 again, identical except for the pairing record.
+
 ## v0.4.1 (2026-09-28)
 
 - **Fuel gauge setup as stock:** the bq27421 check at boot, and re-programming of the stock

@@ -11,7 +11,7 @@
 #include <zephyr/logging/log.h>
 
 #include "pulsedart.h"
-#include "pmw3389_srom.h"
+#include "stock_blobs.h"
 
 LOG_MODULE_REGISTER(sensor, LOG_LEVEL_INF);
 

@@ -26,6 +26,7 @@ Scripts marked **build-specific** contain RAM addresses of one firmware build; u
 | `dump_stock.sh` | **full stock backup** (flash/UICR/FICR twice and compared, EEPROM, checksums) |
 | `dump.tcl`, `dump2.tcl` | flash + UICR + FICR to `dump/` or `dump2/` (used by `dump_stock.sh`) |
 | `eeprom.tcl` | settings EEPROM through the chip's TWIM (halts the CPU, resets after) |
+| `gauge_read.tcl` | fuel gauge (bq27421) through the chip's TWIM: charge, capacity, health, and whether the stock data is programmed (DesignCapacity 800 mAh, ITPOR 0). Standard commands only, nothing is written |
 | `eeprom_restore.sh img` | writes a saved EEPROM image back (changed pages only), verifies |
 | `usbtest.py` | USB self-test: NGENUITY queries (battery, gauge, lighting, DPI) + mouse reports under synthetic motion (`test_cmd` address is build-specific) |
 | `powtest2.py "step" ...` | battery current per phase from the gauge ring (e.g. `"phase(\"BLE moving\", 1, 45)"`, `"cmd(0x10)"`); USB unplugged; addresses are build-specific |

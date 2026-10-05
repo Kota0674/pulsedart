@@ -11,8 +11,9 @@
 | `keys/` | MCUboot signing key, private, not in git |
 | `TESTPLAN.md` | the original first-run test plan (historical) |
 
-Before the first build, generate the stock-derived headers from your own dump:
-`python tools/extract_blobs.py dump/flash.bin`.
+Before the first build, generate the stock-derived data (`mouse/src/stock_blobs.c`) from
+your own dump: `python tools/extract_blobs.py dump/flash.bin`. `build-release.ps1` builds a
+release with marker bytes instead; `tools/make_firmware.py` completes it without a compiler.
 
 Documentation:
 - [../docs/firmware.md](../docs/firmware.md): what the firmware does;

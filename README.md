@@ -56,8 +56,37 @@ are the report rate, not a full click-to-screen latency measurement.
 <img src="docs/img/dongle_pads.jpg" alt="Dongle pads" width="500">
 
 The back of the stock dongle with its SWD pads (only needed if you want to look inside it).
-How I wired the Raspberry Pi as the programmer: [header diagram](docs/img/pi_header_wiring.png),
-details in [docs/hardware.md](docs/hardware.md).
+
+## Wiring the Raspberry Pi as the programmer
+
+The mouse needs only three wires, on three neighbouring pins of the **outer** header row
+(the row at the board edge). Count from the end farthest from the USB ports:
+
+| Pi pin | Signal | Goes to |
+|---|---|---|
+| 18 (GPIO24), 9th in the row | SWDIO | through 150 Ω to the mouse pad **DIO** |
+| 20 (GND), 10th | ground | mouse **GND2**, and the lower leg of the divider |
+| 22 (GPIO25), 11th | SWDCLK | through a 1 k / 2 k divider to the mouse pad **CLK** |
+
+<img src="docs/img/pi_header_wiring.png" alt="Raspberry Pi header: mouse on the right row" width="420">
+
+The mouse runs at **2.1 V**: never connect the Pi's 3.3 V or 5 V to it. The divider and the
+open-drain SWDIO are explained in [docs/hardware.md](docs/hardware.md). `pi/step1.sh` checks the
+wiring without writing anything. If it cannot connect, the clock wire is the usual suspect: I
+once had it on pin 16 instead of pin 22.
+
+## Your settings and your dongle carry over
+
+Nothing has to be copied by hand:
+
+- **Settings** (DPI stages, lighting, button map, macros) live in a separate EEPROM chip in
+  the stock layout. Flashing does not touch it, and this firmware reads the same data.
+- **The pairing with your dongle** is on its own flash page (0xEF000), which the flash scripts
+  leave alone. The firmware uses it by default, so your original dongle keeps working.
+- Bluetooth is new, so you pair that once in your operating system.
+
+Checked on a second, untouched Dart: after the first flash it came up with its own DPI stages,
+lighting and dongle address.
 
 ## Documentation
 
@@ -83,24 +112,36 @@ fw/build.ps1                  build helper (Windows, nRF Connect SDK v3.4.1)
 fw/build-mcuboot.ps1          same for the MCUboot variant (-Debug adds a USB log port)
 pi/                           OpenOCD configs and scripts for the Raspberry Pi programmer
 re/                           reverse-engineering notes of the stock mouse and dongle firmware
-tools/extract_blobs.py        builds the two stock-derived headers from YOUR flash dump
+fw/build-release.ps1          builds a release (both variants, marker bytes instead of stock data)
+tools/make_firmware.py        release + YOUR flash dump -> ready-to-flash files, no compiler
+tools/extract_blobs.py        stock-derived data (sensor SROM, LED tables) from YOUR flash dump, for own builds
 PINMAP.md                     nRF52840 pin map of the mouse
 ```
 
 ## Quick start
 
-1. Wire an SWD programmer ([docs/hardware.md](docs/hardware.md)). The target runs at **2.1 V**.
-2. Dump the complete stock flash, UICR and EEPROM and keep them safe
-   ([docs/flashing.md](docs/flashing.md#dump-the-stock-firmware)).
-3. `python tools/extract_blobs.py dump/flash.bin` (sensor SROM and LED tables from your dump).
-4. `fw\build.ps1 mouse`, then flash `zephyr.hex` with `pi/flash_mouse.sh`.
-
-The stock boot stub and the HyperX USB bootloader below 0x50000 are never touched by the
-normal build. `pi/restore_stock.sh` restores the stock application from your dump.
-
-With the MCUboot variant you flash once over SWD (`fw\build-mcuboot.ps1`,
-`pi/flash_mcuboot.sh`) and update over USB afterwards (`pi/dfu_update.sh`). Generate your own
-signing key first, see [docs/flashing.md](docs/flashing.md#mcuboot-variant-firmware-updates-over-usb-in-use-since-2026-09-28).
+1. Wire an SWD programmer (above, and [docs/hardware.md](docs/hardware.md)).
+2. Dump the complete stock flash, UICR and EEPROM with `pi/dump_stock.sh` and keep them safe
+   ([docs/flashing.md](docs/flashing.md#1-dump-the-stock-firmware)).
+3. Get the firmware files for your mouse, one of two ways:
+   - **From a release, no compiler needed.** A release has marker bytes where the sensor
+     firmware and the LED tables belong, because I cannot publish those. One script puts them in
+     from your own dump (Python 3, plus `pip install cryptography` for the MCUboot files):
+     ```
+     python tools/make_firmware.py --release release/v0.4.1 --dump dump/flash.bin --out out
+     ```
+   - **Build it yourself** with nRF Connect SDK v3.4.1:
+     `python tools/extract_blobs.py dump/flash.bin`, then `fw\build.ps1 mouse` or
+     `fw\build-mcuboot.ps1`.
+4. Flash, choosing one variant:
+   - **Behind the stock boot code:** `pi/flash_mouse.sh out/fw.hex`. The stock boot stub and
+     the HyperX USB bootloader below 0x50000 stay, and `pi/restore_stock.sh` puts the stock
+     application back from your dump. Updates need the SWD wires again.
+   - **MCUboot:** `pi/flash_mcuboot.sh out/mcuboot.hex out/app.signed.hex` once over SWD, then
+     updates over the USB cable with `pi/dfu_update.sh out/app.signed.bin`. This replaces the
+     stock boot code; the way back is `pi/restore_full_stock.sh`. `make_firmware.py` creates
+     your signing key on the first run: keep it private and keep a backup. Details:
+     [docs/flashing.md](docs/flashing.md#mcuboot-variant-firmware-updates-over-usb-in-use-since-2026-09-28).
 
 ## Disclaimer
 

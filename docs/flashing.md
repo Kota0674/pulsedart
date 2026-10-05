@@ -27,14 +27,49 @@ The script:
 Copy `dump/` to a safe place. It is your only way back to stock, and it must never be
 published (see [publishing.md](publishing.md)).
 
-## 2. Generate the stock-derived headers
+## 2. Get the firmware files
+
+The firmware needs two pieces of data from the stock firmware that cannot be published: the
+PixArt sensor firmware (SROM) and the HyperX LED tables. Both come from your own dump. The
+scripts accept only stock firmware 1.1.0.8 (they check a SHA-256 of the data).
+
+### 2a. From a release, without a compiler
+
+A release (`release/v<version>/`, built with `fw\build-release.ps1`) contains both firmware
+variants with marker bytes where that data belongs:
+
+| File | What |
+|---|---|
+| `pulsedart-stockboot.bin` | firmware for 0x50000, behind the stock boot code |
+| `pulsedart-mcuboot.bin` | MCUboot for 0x0 |
+| `pulsedart-app.signed.bin` | firmware image for MCUboot slot 0 (0x10000) |
+
+```bash
+pip install cryptography        # only needed for the MCUboot files
+python tools/make_firmware.py --release release/v0.4.1 --dump dump/flash.bin --out out
+```
+The script:
+- replaces the markers with the SROM and the LED tables from your dump;
+- writes `out/fw.hex` for `pi/flash_mouse.sh`;
+- for MCUboot, creates your signing key on the first run (`fw/keys/pulsedart-ec-p256.pem`, or
+  `--key`), puts your public key into MCUboot and signs the image with your key. It writes
+  `out/mcuboot.hex`, `out/app.signed.hex` (for `pi/flash_mcuboot.sh`) and `out/app.signed.bin`
+  (for `pi/dfu_update.sh`).
+
+Run it again on every new release with the same key. Lose the key and you need SWD again to
+install a bootloader with a new one. With the files in `out/`, skip to step 4.
+
+How this was checked: the output is byte-identical to a normal build of the same sources,
+except for the build time in the version string, and MCUboot's own `imgtool verify` accepts the
+signature (and rejects it for a different key).
+
+### 2b. For your own builds
 
 ```bash
 python tools/extract_blobs.py dump/flash.bin
 ```
-This writes `fw/mouse/src/pmw3389_srom.h` (PixArt SROM) and `fw/mouse/src/led_tables.h`. The
-script checks that the data comes from stock firmware 1.1.0.8. The build stops with a hint if
-these files are missing.
+This writes `fw/mouse/src/stock_blobs.c` (SROM and LED tables). The build stops with a hint if
+the file is missing.
 
 ## 3. Build (Windows, nRF Connect SDK v3.4.1 in `C:\ncs`)
 

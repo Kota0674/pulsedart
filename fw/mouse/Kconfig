@@ -1,5 +1,12 @@
 menu "Pulsedart"
 
+config PULSEDART_BLOB_PLACEHOLDER
+	bool "Release build: marker bytes instead of the stock-derived data"
+	help
+	  Links stock_blobs_placeholder.c instead of stock_blobs.c. The image does not work
+	  until tools/make_firmware.py has put the PMW3389 SROM and the LED tables from the
+	  user's own flash dump in place of the markers.
+
 config PULSEDART_STOCK_USB_ID
 	bool "Present the stock USB identity (0951:16E2, HyperX Pulsefire Dart)"
 	default y

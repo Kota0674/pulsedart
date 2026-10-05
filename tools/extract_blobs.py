@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
-"""Generate the two firmware headers that contain data from the stock firmware.
+"""Stock-derived data for the firmware: the PMW3389 SROM and the LED tables.
 
-They are NOT in the repository (PixArt SROM and HyperX tables are not ours to publish).
-Build them from your own full flash dump of the mouse (see docs/flashing.md, "Dump"):
+This data is NOT in the repository (PixArt SROM and HyperX tables are not ours to publish).
+Take it from your own full flash dump of the mouse (see docs/flashing.md, "Dump"):
 
     python tools/extract_blobs.py dump/flash.bin [output_dir]
 
-Outputs:
-    fw/mouse/src/pmw3389_srom.h  - PMW3389 SROM (flash 0x64926, 4094 bytes, SROM_ID 0x05)
-    fw/mouse/src/led_tables.h    - LED gamma / breathing / colour-cycle tables
+writes fw/mouse/src/stock_blobs.c, which the normal build compiles.
 
-The script only accepts stock firmware 1.1.0.8 (it checks the SHA-256 of every blob).
+    python tools/extract_blobs.py --placeholder
+
+writes fw/mouse/src/stock_blobs_placeholder.c: the same arrays filled with marker bytes. It is
+used for release builds (CONFIG_PULSEDART_BLOB_PLACEHOLDER); tools/make_firmware.py replaces
+the markers in the built image with the data from your dump.
+
+Only stock firmware 1.1.0.8 is accepted (the SHA-256 of every blob is checked).
 """
 import hashlib
 import sys
@@ -19,77 +23,80 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "fw" / "mouse" / "src"
 
-SROM = (0x64926, 4094, "e1848d529531e0e8048925b294318441eec0e1f14b85284d643293a68ff34202")
-# name, flash address, length, sha256 of the bytes
-TABLES = [
-    ("led_gamma", 0x66996, 256, None),
-    ("led_breath", 0x66b52, 188, None),
-    ("led_cycle_colours", 0x66c1a, 27, None),
+# name, flash address in the stock image, length, C dimensions
+BLOBS = [
+    ("pmw3389_srom", 0x64926, 4094, "[PMW3389_SROM_LEN]"),
+    ("led_gamma", 0x66996, 256, "[256]"),
+    ("led_breath", 0x66B52, 188, "[188]"),
+    ("led_cycle_colours", 0x66C1A, 27, "[9][3]"),
 ]
-TABLES_SHA = "acb64b50c595e908521f1c5af9a75dbcf1282b34abc5a0c0c71fe3ce8bfd9aec"
+# sha256 of the four blobs concatenated, stock firmware 1.1.0.8
+BLOBS_SHA = "8fdc0821c962723021f5e8ffb93b794c54520fd4b3d70958c0c5336827587504"
 
 
 def sha(b):
     return hashlib.sha256(b).hexdigest()
 
 
-def c_rows(b, cols, indent):
-    return "\n".join(indent + ", ".join(f"0x{x:02x}" for x in b[i:i + cols]) + ","
-                     for i in range(0, len(b), cols))
+def stock_blobs(dump):
+    """{name: bytes} from a full 1 MB flash dump of stock 1.1.0.8."""
+    if len(dump) != 1024 * 1024:
+        sys.exit("expected a full 1 MB flash dump of the nRF52840")
+    data = {name: dump[addr:addr + n] for name, addr, n, _ in BLOBS}
+    got = sha(b"".join(data[name] for name, *_ in BLOBS))
+    if got != BLOBS_SHA:
+        sys.exit(f"the dump does not contain stock firmware 1.1.0.8 (blob sha256 {got})")
+    return data
 
 
-def srom_header(d):
-    addr, n, want = SROM
-    b = d[addr:addr + n]
-    if sha(b) != want:
-        sys.exit(f"SROM at 0x{addr:05x} does not match stock 1.1.0.8 (sha256 {sha(b)})")
-    body = c_rows(b, 12, "\t")
-    body = body[:-1]  # the original has no trailing comma after the last byte
-    return (
-        "/*\n"
-        " * PMW3389 SROM firmware, extracted from the stock Pulsefire Dart firmware 1.1.0.8\n"
-        f" * (flash 0x{addr:05x}, {n} bytes, SROM_ID 0x05). See re/sensor.md section 4.\n"
-        f" * sha256 {want}\n"
-        " */\n"
-        "#pragma once\n"
-        "#include <stdint.h>\n\n"
-        "#define PMW3389_SROM_ID 0x05\n\n"
-        f"static const uint8_t pmw3389_srom[{n}] = {{\n{body}\n}};\n"
-    )
+def placeholder(name, n):
+    """Marker bytes for a blob: a SHA-256 counter stream, unique and easy to find again."""
+    out = b""
+    i = 0
+    while len(out) < n:
+        out += hashlib.sha256(f"pulsedart-placeholder:{name}:{i}".encode()).digest()
+        i += 1
+    return out[:n]
 
 
-def led_header(d):
-    parts = ["/* LED tables extracted from the stock firmware 1.1.0.8 (see re/led_effects.md). */",
-             "#pragma once", "#include <stdint.h>", ""]
-    for name, addr, n, _ in TABLES:
-        b = d[addr:addr + n]
-        if name == "led_cycle_colours":
-            parts.append(f"/* source: flash 0x{addr:05x}..0x{addr + n - 1:05x} */")
-            parts.append(f"static const uint8_t {name}[9][3] = {{")
-            parts += ["    { " + ", ".join(f"0x{x:02x}" for x in b[i:i + 3]) + " },"
+def c_file(data, comment):
+    lines = [f"/* {comment} */", '#include "stock_blobs.h"', ""]
+    for name, addr, n, dims in BLOBS:
+        b = data[name]
+        lines.append(f"/* stock flash 0x{addr:05x}, {n} bytes */")
+        lines.append(f"const uint8_t {name}{dims} = {{")
+        if dims.count("[") == 2:
+            lines += ["\t{ " + ", ".join(f"0x{x:02x}" for x in b[i:i + 3]) + " },"
                       for i in range(0, n, 3)]
         else:
-            parts.append(f"/* source: flash 0x{addr:05x}..0x{addr + n - 1:05x} ({n} bytes) */")
-            parts.append(f"static const uint8_t {name}[{n}] = {{")
-            parts.append(c_rows(b, 16, "    "))
-        parts += ["};", ""]
-    return "\n".join(parts)
+            lines += ["\t" + ", ".join(f"0x{x:02x}" for x in b[i:i + 12]) + ","
+                      for i in range(0, n, 12)]
+        lines += ["};", ""]
+    return "\n".join(lines)
 
 
 def main():
-    if len(sys.argv) not in (2, 3):
+    args = sys.argv[1:]
+    if args == ["--placeholder"]:
+        data = {name: placeholder(name, n) for name, _, n, _ in BLOBS}
+        path = OUT / "stock_blobs_placeholder.c"
+        path.write_text(c_file(data, "Marker bytes, NOT real data: generated by "
+                                     "tools/extract_blobs.py --placeholder.\n * A release "
+                                     "build links this file; tools/make_firmware.py puts the "
+                                     "real data in."), newline="\n")
+        print("written:", path)
+        return
+    if len(args) not in (1, 2):
         sys.exit(__doc__)
-    out = Path(sys.argv[2]) if len(sys.argv) == 3 else OUT
-    d = Path(sys.argv[1]).read_bytes()
-    if len(d) != 1024 * 1024:
-        sys.exit("expected a full 1 MB flash dump of the nRF52840")
-    tbl = b"".join(d[a:a + n] for _, a, n, _ in TABLES)
-    if sha(tbl) != TABLES_SHA:
-        sys.exit(f"LED tables do not match stock 1.1.0.8 (sha256 {sha(tbl)})")
+    out = Path(args[1]) if len(args) == 2 else OUT
+    data = stock_blobs(Path(args[0]).read_bytes())
     out.mkdir(parents=True, exist_ok=True)
-    (out / "pmw3389_srom.h").write_text(srom_header(d), newline="\n")
-    (out / "led_tables.h").write_text(led_header(d), newline="\n")
-    print("written:", out / "pmw3389_srom.h", out / "led_tables.h")
+    path = out / "stock_blobs.c"
+    path.write_text(c_file(data, "Extracted from the stock Pulsefire Dart firmware 1.1.0.8 by "
+                                 "tools/extract_blobs.py.\n * Do not publish: PixArt SROM and "
+                                 "HyperX tables (see re/sensor.md, re/led_effects.md)."),
+                    newline="\n")
+    print("written:", path)
 
 
 if __name__ == "__main__":

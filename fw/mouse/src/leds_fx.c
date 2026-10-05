@@ -10,7 +10,7 @@
 #include "pulsedart.h"
 #include "stockcfg.h"
 #include "leds_fx.h"
-#include "led_tables.h"
+#include "stock_blobs.h"
 
 #ifndef ABS
 #define ABS(x) ((x) < 0 ? -(x) : (x))
