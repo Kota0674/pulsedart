@@ -46,7 +46,7 @@ variants with marker bytes where that data belongs:
 
 ```bash
 pip install cryptography        # only needed for the MCUboot files
-python tools/make_firmware.py --release release/v0.4.1 --dump dump/flash.bin --out out
+python tools/make_firmware.py --release release/v0.4.2 --dump dump/flash.bin --out out
 ```
 The script:
 - replaces the markers with the SROM and the LED tables from your dump;

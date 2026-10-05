@@ -29,8 +29,10 @@ New-Item -ItemType Directory -Force $out | Out-Null
 Copy-Item "$fw\mouse\build-release\mouse\zephyr\zephyr.bin" "$out\pulsedart-stockboot.bin"
 Copy-Item "$fw\mouse\build-release-mcuboot\mcuboot\zephyr\zephyr.bin" "$out\pulsedart-mcuboot.bin"
 Copy-Item "$fw\mouse\build-release-mcuboot\mouse\zephyr\zephyr.signed.bin" "$out\pulsedart-app.signed.bin"
-Get-ChildItem $out -Filter *.bin | ForEach-Object {
+$sums = Get-ChildItem $out -Filter *.bin | ForEach-Object {
     "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name
-} | Set-Content -Encoding ascii "$out\SHA256SUMS"
+}
+# LF line ends: "sha256sum -c" on Linux rejects CRLF
+[IO.File]::WriteAllText("$out\SHA256SUMS", ($sums -join "`n") + "`n")
 Get-Content "$out\SHA256SUMS"
 "release written to $out"

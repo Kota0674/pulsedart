@@ -5,7 +5,7 @@ A release contains the firmware with marker bytes where the PixArt sensor firmwa
 and the HyperX LED tables belong: that data cannot be published. This script takes it from
 your own flash dump and writes ready-to-flash files:
 
-    python tools/make_firmware.py --release release/v0.4.1 --dump dump/flash.bin --out out
+    python tools/make_firmware.py --release release/v0.4.2 --dump dump/flash.bin --out out
 
 Output (flash with the scripts in pi/, see docs/flashing.md):
     out/fw.hex               firmware behind the stock boot code   -> pi/flash_mouse.sh

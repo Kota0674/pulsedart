@@ -1,9 +1,9 @@
 # Changelog
 
-Dates are when the work was done. Only `v0.4.1` is tagged; the older entries describe how the
+Dates are when the work was done. Tags start at `v0.4.1`; the older entries describe how the
 project got there.
 
-## Unreleased
+## v0.4.2 (2026-10-05)
 
 - **Releases without a compiler:** `fw\build-release.ps1` builds both variants with marker
   bytes instead of the sensor SROM and the LED tables, and `tools/make_firmware.py` puts that

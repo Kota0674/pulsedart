@@ -128,7 +128,7 @@ PINMAP.md                     nRF52840 pin map of the mouse
      firmware and the LED tables belong, because I cannot publish those. One script puts them in
      from your own dump (Python 3, plus `pip install cryptography` for the MCUboot files):
      ```
-     python tools/make_firmware.py --release release/v0.4.1 --dump dump/flash.bin --out out
+     python tools/make_firmware.py --release release/v0.4.2 --dump dump/flash.bin --out out
      ```
    - **Build it yourself** with nRF Connect SDK v3.4.1:
      `python tools/extract_blobs.py dump/flash.bin`, then `fw\build.ps1 mouse` or
